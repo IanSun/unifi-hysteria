@@ -1,0 +1,24 @@
+#!/bin/sh
+set +e
+
+if [ -d "/run/systemd/system" ]
+then
+	systemctl stop "hysteria-client@*" >/dev/null 2>&1
+	systemctl disable "hysteria-client@*" >/dev/null 2>&1
+
+	systemctl stop "hysteria-server@*" >/dev/null 2>&1
+	systemctl disable "hysteria-server@*" >/dev/null 2>&1
+fi
+
+rm -fr \
+	"/etc/systemd/system/hysteria-client@.service" \
+	"/etc/systemd/system/hysteria-client@.service.d" \
+	"/etc/systemd/system/multi-user.target.wants/hysteria-client@*.service" \
+	"/etc/systemd/system/hysteria-server@.service" \
+	"/etc/systemd/system/hysteria-server@.service.d" \
+	"/etc/systemd/system/multi-user.target.wants/hysteria-server@*.service"
+
+if [ -d "/run/systemd/system" ]
+then
+	systemctl daemon-reload
+fi
