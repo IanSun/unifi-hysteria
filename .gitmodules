@@ -1,0 +1,4 @@
+[submodule "src"]
+	path = src
+	url = https://github.com/apernet/hysteria.git
+	branch = master
