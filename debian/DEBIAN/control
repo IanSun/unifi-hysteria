@@ -1,0 +1,10 @@
+Package: unifi-hysteria
+Version: 0.0.0
+Section: net
+Priority: optional
+Architecture: arm64
+Depends: systemd
+Maintainer: Ian Sun <me@sunyun.name>
+Description: Hysteria for UniFi OS
+ A powerful, lightning fast and censorship resistant network proxy.
+Homepage: https://hysteria.network/

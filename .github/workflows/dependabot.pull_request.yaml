@@ -1,0 +1,109 @@
+name: Dependabot Pull Request
+
+run-name: ${{ github.event.pull_request.title }}
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  DEBCHANGE_PRESERVE: 1
+  DEBCHANGE_TZ: UTC
+  DEBFULLNAME: ${{ github.actor }}
+  DEBEMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
+  GIT_AUTHOR_EMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
+  GIT_AUTHOR_NAME: ${{ github.actor }}
+  GIT_COMMITTER_EMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
+  GIT_COMMITTER_NAME: ${{ github.actor }}
+
+jobs:
+  dependabot:
+    name: Commit Dependabot Pull Request
+    permissions:
+      contents: write
+      pull-requests: write
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-slim
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          submodules: true
+      - name: Setup Debian Packaging Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -qy --no-install-recommends \
+            devscripts \
+            libdistro-info-perl \
+            python3-debian
+      - name: Update Changelog
+        run: |
+          declare -r HYSTERIA_GIT_TAG="$(git -C src describe --tags --abbrev=0)"
+          declare -r HYSTERIA_VERSION="${HYSTERIA_GIT_TAG#app/v}"
+
+          if [[ -f "debian/changelog" ]]
+          then
+            declare -r CHANGELOG_VERSION="$(dpkg-parsechangelog -S Version 2>/dev/null)"
+
+            if dpkg --compare-versions "${CHANGELOG_VERSION}" ge "${HYSTERIA_VERSION}"
+            then
+              printf "Version %s already exists (current: %s), rebuilding package...\n" \
+                "${HYSTERIA_VERSION}" \
+                "${CHANGELOG_VERSION}" \
+                >&2
+              debchange -R "New upstream release ${HYSTERIA_GIT_TAG}"
+            else
+              printf "Upgrading unifi-hysteria from %s to %s...\n" \
+                "${CHANGELOG_VERSION}" \
+                "${HYSTERIA_VERSION}" \
+                >&2
+              debchange -v "${HYSTERIA_VERSION}-1+build1" "New upstream release ${HYSTERIA_GIT_TAG}"
+            fi
+          else
+            printf "Creating Debian changelog for unifi-hysteria %s...\n" "${HYSTERIA_VERSION}" >&2
+            mkdir -p debian
+            debchange \
+              --create \
+              -v "${HYSTERIA_VERSION}-1+build1" \
+              --package "unifi-hysteria" \
+              "New upstream release ${HYSTERIA_GIT_TAG}"
+          fi
+
+          debchange -D bullseye -r ""
+
+          declare -r VERSION="$(dpkg-parsechangelog -S Version 2>/dev/null)"
+
+          python3 -c "
+          from debian import deb822
+
+          path = 'debian/DEBIAN/control'
+
+          with open(path, 'r') as file:
+            control = deb822.Deb822(file)
+
+          control['Version'] = '${VERSION}'
+
+          with open(path, 'w') as file:
+            file.write(control.dump())
+          "
+
+          git add debian/changelog debian/DEBIAN/control
+          git commit -m "chore(unifi-hysteria): bump to ${VERSION}"
+      - name: Git Push
+        run: |
+          printf "Pushing changes to branch ${{ github.event.pull_request.head.ref }}...\n" >&2
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+      - id: token
+        name: Create GitHub App Token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+      - name: Merge Pull Request
+        run: |
+          gh pr merge "${{ github.event.pull_request.number }}" -ds
+        env:
+          GITHUB_TOKEN: ${{ steps.token.outputs.token }}
