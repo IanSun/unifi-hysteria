@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+mkdir -p /etc/hysteria/{client,server}
+
+ln -fs /opt/lib/systemd/system/hysteria-client@.service /etc/systemd/system/
+ln -fs /opt/lib/systemd/system/hysteria-server@.service /etc/systemd/system/
+
+if [ -d /run/systemd/system ]
+then
+	systemctl daemon-reload
+fi
