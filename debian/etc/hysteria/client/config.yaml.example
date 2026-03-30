@@ -1,0 +1,9 @@
+server: example.net
+
+auth: password
+
+socks5:
+  listen: :1080
+
+http:
+  listen: :8080

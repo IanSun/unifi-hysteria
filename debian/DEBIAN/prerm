@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+if [ -d /run/systemd/system ]
+then
+	systemctl disable --now "hysteria-client@*" >/dev/null 2>&1 || true
+	systemctl disable --now "hysteria-server@*" >/dev/null 2>&1 || true
+fi
+
+rm -f /etc/systemd/system/hysteria-{client,server}@.service
+
+if [ -d /run/systemd/system ]
+then
+	systemctl daemon-reload
+fi
