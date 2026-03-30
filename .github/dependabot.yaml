@@ -1,0 +1,13 @@
+version: 2
+
+multi-ecosystem-groups:
+  upstream:
+    schedule:
+      interval: cron
+      cronjob: 0 0 * * *
+
+updates:
+  - directory: /
+    multi-ecosystem-group: upstream
+    patterns: ["*"]
+    package-ecosystem: gitsubmodule
