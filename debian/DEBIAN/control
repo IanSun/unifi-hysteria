@@ -1,5 +1,5 @@
 Package: unifi-hysteria
-Version: 2.8.1-1+build1
+Version: 2.8.1-1+build2
 Section: net
 Priority: optional
 Architecture: arm64
