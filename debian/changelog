@@ -1,3 +1,9 @@
+unifi-hysteria (2.8.1-1+build6) bullseye; urgency=medium
+
+  * New upstream release app/v1.3.4
+
+ -- dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>  Mon, 27 Apr 2026 00:20:57 +0000
+
 unifi-hysteria (2.8.1-1+build5) bullseye; urgency=medium
 
   * New upstream release app/v2.8.1
